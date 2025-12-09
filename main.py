@@ -44,7 +44,7 @@ app.layout = html.Div(
     [
         html.Div(
             [
-                html.H1("CV Reader", className="app-header"),
+                html.H1("Sprenkels AI", className="app-header"),
             ],
             className="navbar",
         ),
@@ -52,34 +52,40 @@ app.layout = html.Div(
             [
                 html.Div(
                     [
-                        dcc.Upload(
-                            id="upload-data",
-                            className="upload-box",
-                            children=html.Div(
-                                ["Drag and Drop or ", html.A("Select PDF Files")]
-                            ),
-                            multiple=True,
+                        html.H2(
+                            "Welke CV's wil je uitlezen?", className="upload-header"
                         ),
-                        html.Button(
-                            "GO!",
-                            id="process-button",
+                        html.Div(
+                            [
+                                dcc.Upload(
+                                    id="upload-data",
+                                    className="upload-box",
+                                    children=[
+                                        html.Div(
+                                            [
+                                                "Sleep of ",
+                                                html.A("selecteer pdf bestanden"),
+                                            ],
+                                            className="upload-instructions",
+                                        ),
+                                    ],
+                                    accept=".pdf",
+                                    multiple=True,
+                                ),
+                                html.Button(
+                                    "Lezen",
+                                    id="process-button",
+                                ),
+                            ],
+                            className="upload-area",
                         ),
                     ],
-                    className="upload-container",
+                    className="upload-section",
                 ),
                 html.Div(id="upload-contents", className="output-container"),
-                dash_table.DataTable(
-                    id="candidates-table",
-                    columns=[{"name": "", "id": "Field"}]
-                    + [
-                        {"name": candidatastes_df.loc[i, "name"], "id": str(i)}
-                        for i in candidatastes_df.index
-                    ],
-                    data=candidatastes_df.T.reset_index()
-                    .rename(columns={"index": "Field"})
-                    .to_dict("records"),
-                    style_cell={"textAlign": "left"},
-                    style_data={"backgroundColor": "#D9D9D9"},
+                html.Div(
+                    id="output-container",
+                    className="output-container",
                 ),
             ],
             className="main-content",
@@ -114,27 +120,18 @@ def update_filenames(filenames, contents):
             ]
         )
         return html.Ul([html.Li(html.P(file.filename)) for file in files])
-    return "No files uploaded yet."
+    return "Nog geen bestanden geüpload."
 
 
 @callback(
-    Output("candidates-table", "data"),
-    Output("candidates-table", "columns"),
+    Output("output-container", "children"),
     Input("process-button", "n_clicks"),
 )
 def process_pdfs(n_clicks):
     if n_clicks is None or not files:
         global candidatastes_df
-        return (
-            candidatastes_df.T.reset_index()
-            .rename(columns={"index": "Field"})
-            .to_dict("records"),
-            [{"name": "", "id": "Field"}]
-            + [
-                {"name": candidatastes_df.loc[i, "name"], "id": str(i)}
-                for i in candidatastes_df.index
-            ],
-        )
+
+        return html.Div()
 
     cv_texts = ""
     for pdf_file in files:
@@ -156,14 +153,17 @@ def process_pdfs(n_clicks):
         )
 
         return (
-            candidatastes_df.T.reset_index()
-            .rename(columns={"index": "Field"})
-            .to_dict("records"),
-            [{"name": "", "id": "Field"}]
-            + [
-                {"name": candidatastes_df.loc[i, "name"], "id": str(i)}
-                for i in candidatastes_df.index
-            ],
+            dash_table.DataTable(
+                id="candidates-table",
+                columns=[{"name": "kandidaat", "id": "Field"}]
+                + [{"name": str(i + 1), "id": str(i)} for i in candidatastes_df.index],
+                data=candidatastes_df.T.reset_index()
+                .rename(columns={"index": "Field"})
+                .to_dict("records"),
+                style_cell={"textAlign": "left"},
+                style_data={"backgroundColor": "rgb(66, 66, 66)"},
+                style_header={"backgroundColor": "rgb(30, 30, 30)"},
+            ),
         )
 
 
